@@ -67,3 +67,6 @@ logs/
 
 # Claude Code local
 .claude/
+
+# Base original obtida da UCI
+data/raw/*.csv
