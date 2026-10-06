@@ -22,7 +22,19 @@ COLUMN_MAPPING = {
 }
 
 FEATURE_COLUMNS = [
-    name
-    for name in COLUMN_MAPPING.values()
-    if name not in {ID_COLUMN, TARGET_COLUMN}
+    name for name in COLUMN_MAPPING.values() if name not in {ID_COLUMN, TARGET_COLUMN}
 ]
+
+CATEGORICAL_COLUMNS = [
+    "sex",
+    "education",
+    "marriage",
+    "pay_0",
+    "pay_2",
+    "pay_3",
+    "pay_4",
+    "pay_5",
+    "pay_6",
+]
+
+NUMERIC_COLUMNS = [column for column in FEATURE_COLUMNS if column not in CATEGORICAL_COLUMNS]
