@@ -70,3 +70,6 @@ logs/
 
 # Base original obtida da UCI
 data/raw/*.csv
+
+# Conjunto de teste
+data/test/*.csv
