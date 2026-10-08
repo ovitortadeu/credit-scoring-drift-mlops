@@ -1,0 +1,63 @@
+{
+  "evaluated_at_utc": "2026-10-08T22:06:40.226453+00:00",
+  "test_rows": 6000,
+  "test_sha256": "cb5a4395e9c9d1fbbf8bac8ea2ba3cc472f129a6b051d79bae756029b17efaa9",
+  "training_summary_sha256": "9b26e0426eb9fa327c8d550d765c9340a1ad9423d17ca5992adf39338fc9da53",
+  "positive_class": 1,
+  "prediction_rule": "pipeline.predict; no threshold tuning",
+  "zero_division": 0,
+  "models": {
+    "logistic_regression": {
+      "artifact": "models/logistic_regression.joblib",
+      "artifact_sha256": "b827774ab1550c8053613203eb1740da4bb4e4f5832cbcfe107e3725e2df2b95",
+      "metrics": {
+        "accuracy": 0.8175,
+        "precision": 0.6652421652421653,
+        "recall": 0.3519216277317257,
+        "f1": 0.4603252833908329,
+        "roc_auc": 0.7530948282965959
+      },
+      "confusion_matrix": [
+        [
+          4438,
+          235
+        ],
+        [
+          860,
+          467
+        ]
+      ],
+      "confusion_matrix_labels": [
+        0,
+        1
+      ],
+      "predicted_positive_count": 702
+    },
+    "dummy": {
+      "artifact": "models/dummy.joblib",
+      "artifact_sha256": "8026312649e2159a146c767f12f6c6a52981c850272f0abb59ee8cb5af894211",
+      "metrics": {
+        "accuracy": 0.7788333333333334,
+        "precision": 0.0,
+        "recall": 0.0,
+        "f1": 0.0,
+        "roc_auc": 0.5
+      },
+      "confusion_matrix": [
+        [
+          4673,
+          0
+        ],
+        [
+          1327,
+          0
+        ]
+      ],
+      "confusion_matrix_labels": [
+        0,
+        1
+      ],
+      "predicted_positive_count": 0
+    }
+  }
+}
