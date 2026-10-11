@@ -74,10 +74,7 @@ def main() -> None:
         "production_base": fold_assignment == 1,
     }
 
-    splits = {
-        name: data.loc[mask].copy()
-        for name, mask in masks.items()
-    }
+    splits = {name: data.loc[mask].copy() for name, mask in masks.items()}
 
     # Verifica separacao tanto por identificador quanto por perfil.
     for left, right in combinations(splits, 2):
@@ -141,10 +138,7 @@ def main() -> None:
             "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
         }
 
-        print(
-            f"{name}: {len(part)} registros | "
-            f"inadimplencia: {part[TARGET_COLUMN].mean():.2%}"
-        )
+        print(f"{name}: {len(part)} registros | inadimplencia: {part[TARGET_COLUMN].mean():.2%}")
 
     REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
     REPORT_PATH.write_text(
