@@ -17,11 +17,7 @@ def main() -> None:
     """Baixa a base da UCI e registra sua origem e integridade."""
     RAW_DIR.mkdir(parents=True, exist_ok=True)
 
-    
-    if any(
-        path.exists()
-        for path in (DATASET_PATH, MANIFEST_PATH, DICTIONARY_PATH)
-    ):
+    if any(path.exists() for path in (DATASET_PATH, MANIFEST_PATH, DICTIONARY_PATH)):
         raise FileExistsError(
             "Ja existem arquivos da base em data/raw. "
             "Confira-os antes de realizar um novo download."
@@ -34,9 +30,7 @@ def main() -> None:
     expected_columns = ["ID", *[f"X{i}" for i in range(1, 24)], "Y"]
 
     if data.columns.tolist() != expected_columns:
-        raise ValueError(
-            f"Colunas diferentes das esperadas: {data.columns.tolist()}"
-        )
+        raise ValueError(f"Colunas diferentes das esperadas: {data.columns.tolist()}")
 
     if len(data) != 30_000:
         raise ValueError(f"Quantidade inesperada de registros: {len(data)}")
@@ -49,9 +43,7 @@ def main() -> None:
 
     # Preserva nomes, valores e ordem recebidos; não realiza limpeza.
     data.to_csv(DATASET_PATH, index=False, encoding="utf-8", lineterminator="\n")
-    dataset.variables.to_csv(
-        DICTIONARY_PATH, index=False, encoding="utf-8", lineterminator="\n"
-    )
+    dataset.variables.to_csv(DICTIONARY_PATH, index=False, encoding="utf-8", lineterminator="\n")
 
     checksum = hashlib.sha256(DATASET_PATH.read_bytes()).hexdigest()
 
@@ -74,8 +66,7 @@ def main() -> None:
         "target": "Y",
         "id_column": "ID",
         "target_counts": {
-            str(label): int(count)
-            for label, count in data["Y"].value_counts().sort_index().items()
+            str(label): int(count) for label, count in data["Y"].value_counts().sort_index().items()
         },
         "csv_sha256": checksum,
     }
