@@ -209,8 +209,12 @@ uv run python -m src.models.train
 uv run python -m src.models.evaluate
 ```
 
-O download bloqueia a sobrescrita se já houver arquivos de saída.
-Quando a base original já estiver disponível, pule essa etapa.
+O download bloqueia a sobrescrita quando os CSVs de saída já existem.
+Quando somente o manifesto versionado está presente, o script baixa
+a base, confere seu SHA-256 e preserva o manifesto. Se o hash divergir,
+interrompe antes de gravar os CSVs.
+
+Quando a base original já estiver disponível, pule o download.
 
 A separação, o treinamento e a avaliação regeneram seus respectivos
 arquivos. Ao retreinar, execute a avaliação novamente para manter

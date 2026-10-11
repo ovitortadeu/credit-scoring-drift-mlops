@@ -17,7 +17,7 @@ def main() -> None:
     """Baixa a base da UCI e registra sua origem e integridade."""
     RAW_DIR.mkdir(parents=True, exist_ok=True)
 
-    if any(path.exists() for path in (DATASET_PATH, MANIFEST_PATH, DICTIONARY_PATH)):
+    if any(path.exists() for path in (DATASET_PATH, DICTIONARY_PATH)):
         raise FileExistsError(
             "Ja existem arquivos da base em data/raw. "
             "Confira-os antes de realizar um novo download."
@@ -41,11 +41,27 @@ def main() -> None:
     if data["Y"].isna().any() or set(data["Y"].unique()) != {0, 1}:
         raise ValueError("O alvo Y deve conter apenas as classes 0 e 1.")
 
-    # Preserva nomes, valores e ordem recebidos; não realiza limpeza.
-    data.to_csv(DATASET_PATH, index=False, encoding="utf-8", lineterminator="\n")
-    dataset.variables.to_csv(DICTIONARY_PATH, index=False, encoding="utf-8", lineterminator="\n")
+        # Confere os dados antes de gravar os arquivos.
+    csv_bytes = data.to_csv(index=False, lineterminator="\n").encode("utf-8")
+    checksum = hashlib.sha256(csv_bytes).hexdigest()
 
-    checksum = hashlib.sha256(DATASET_PATH.read_bytes()).hexdigest()
+    existing_manifest = None
+    if MANIFEST_PATH.exists():
+        existing_manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
+
+        if checksum != existing_manifest["csv_sha256"]:
+            raise ValueError(
+                "A base baixada difere do manifesto versionado. "
+                "Nenhum CSV foi gravado. Investigue a origem antes de continuar."
+            )
+
+    DATASET_PATH.write_bytes(csv_bytes)
+    dataset.variables.to_csv(
+        DICTIONARY_PATH,
+        index=False,
+        encoding="utf-8",
+        lineterminator="\n",
+    )
 
     manifest = {
         "dataset": "Default of Credit Card Clients",
@@ -71,10 +87,13 @@ def main() -> None:
         "csv_sha256": checksum,
     }
 
-    MANIFEST_PATH.write_text(
-        json.dumps(manifest, indent=2, ensure_ascii=False) + "\n",
-        encoding="utf-8",
-    )
+    if existing_manifest is None:
+        MANIFEST_PATH.write_text(
+            json.dumps(manifest, indent=2, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
+    else:
+        print("Hash confirmado. Manifesto versionado preservado.")
 
     print(f"Base salva em: {DATASET_PATH}")
     print(f"Dimensoes: {data.shape}")
