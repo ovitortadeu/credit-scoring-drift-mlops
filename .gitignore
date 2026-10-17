@@ -73,3 +73,6 @@ data/raw/*.csv
 
 # Conjunto de teste
 data/test/*.csv
+
+# Lotes de producao (gerados em runtime: invalid_batch, cenarios de drift)
+data/production/*.csv
