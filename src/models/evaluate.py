@@ -19,6 +19,7 @@ from sklearn.metrics import (
 )
 
 from src.data.schema import COLUMN_MAPPING, FEATURE_COLUMNS, TARGET_COLUMN
+from src.validation.schema import validate
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 REPORTS_DIR = PROJECT_ROOT / "reports"
@@ -96,6 +97,9 @@ def main() -> None:
         raise ValueError("O conjunto de teste difere do manifesto da separacao.")
 
     data = pd.read_csv(TEST_PATH)
+
+    # Contrato Pandera: gate obrigatorio antes de qualquer uso dos dados.
+    validate(data)
 
     if data.columns.tolist() != list(COLUMN_MAPPING.values()):
         raise ValueError("As colunas do teste diferem do schema.")

@@ -18,6 +18,7 @@ from sklearn.pipeline import Pipeline
 
 from src.data.preprocessing import build_preprocessor
 from src.data.schema import COLUMN_MAPPING, FEATURE_COLUMNS, ID_COLUMN, TARGET_COLUMN
+from src.validation.schema import validate
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 REFERENCE_PATH = PROJECT_ROOT / "data/reference/reference.csv"
@@ -62,6 +63,9 @@ def main() -> None:
         raise ValueError("A referencia foi alterada desde a separacao.")
 
     data = pd.read_csv(REFERENCE_PATH)
+
+    # Contrato Pandera: gate obrigatorio antes de qualquer uso dos dados.
+    validate(data)
 
     if data.columns.tolist() != list(COLUMN_MAPPING.values()):
         raise ValueError("As colunas da referencia diferem do schema.")
