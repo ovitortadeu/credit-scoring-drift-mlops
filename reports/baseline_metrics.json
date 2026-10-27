@@ -1,15 +1,15 @@
 {
-  "evaluated_at_utc": "2026-10-08T22:06:40.226453+00:00",
+  "evaluated_at_utc": "2026-10-25T18:58:14.335077+00:00",
   "test_rows": 6000,
   "test_sha256": "cb5a4395e9c9d1fbbf8bac8ea2ba3cc472f129a6b051d79bae756029b17efaa9",
-  "training_summary_sha256": "9b26e0426eb9fa327c8d550d765c9340a1ad9423d17ca5992adf39338fc9da53",
+  "training_summary_sha256": "174984b94f3e0df046c44f368eee19715f8e73674a907a42d1a17f07aaab4931",
   "positive_class": 1,
   "prediction_rule": "pipeline.predict; no threshold tuning",
   "zero_division": 0,
   "models": {
     "logistic_regression": {
       "artifact": "models/logistic_regression.joblib",
-      "artifact_sha256": "b827774ab1550c8053613203eb1740da4bb4e4f5832cbcfe107e3725e2df2b95",
+      "artifact_sha256": "30f1e5d264079303af6e488fd35546973b39469937af8c0b201dffb8d632e602",
       "metrics": {
         "accuracy": 0.8175,
         "precision": 0.6652421652421653,
