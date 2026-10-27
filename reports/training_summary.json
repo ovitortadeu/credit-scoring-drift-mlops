@@ -1,5 +1,5 @@
 {
-  "trained_at_utc": "2026-10-08T21:56:00.826885+00:00",
+  "trained_at_utc": "2026-10-25T18:57:49.740882+00:00",
   "training_dataset": "reference",
   "training_rows": 17999,
   "reference_sha256": "7cc90d5d237d5174b203d09ca0927d907e9754a3032b96c86658443db88783b8",
@@ -41,7 +41,7 @@
   },
   "models": {
     "logistic_regression": {
-      "training_seconds": 1.4601456999662332,
+      "training_seconds": 0.6755520000006072,
       "classifier_params": {
         "C": 1.0,
         "class_weight": null,
@@ -158,10 +158,10 @@
         75
       ],
       "artifact": "models/logistic_regression.joblib",
-      "artifact_sha256": "b827774ab1550c8053613203eb1740da4bb4e4f5832cbcfe107e3725e2df2b95"
+      "artifact_sha256": "30f1e5d264079303af6e488fd35546973b39469937af8c0b201dffb8d632e602"
     },
     "dummy": {
-      "training_seconds": 0.07133389997761697,
+      "training_seconds": 0.03878089998033829,
       "classifier_params": {
         "constant": null,
         "random_state": null,

@@ -1,0 +1,43 @@
+{
+  "generated_at_utc": "2026-10-25T19:32:15.284797+00:00",
+  "source": "data/production/production_base.csv",
+  "output": "data/production/production_drifted.csv",
+  "rows": 6001,
+  "columns": [
+    "client_id",
+    "limit_bal",
+    "sex",
+    "education",
+    "marriage",
+    "age",
+    "pay_0",
+    "pay_2",
+    "pay_3",
+    "pay_4",
+    "pay_5",
+    "pay_6",
+    "bill_amt1",
+    "bill_amt2",
+    "bill_amt3",
+    "bill_amt4",
+    "bill_amt5",
+    "bill_amt6",
+    "pay_amt1",
+    "pay_amt2",
+    "pay_amt3",
+    "pay_amt4",
+    "pay_amt5",
+    "pay_amt6",
+    "default_next_month"
+  ],
+  "parameters": {
+    "seed": 42,
+    "delay_probability": 0.4,
+    "max_delay_increment": 3,
+    "payment_reduction_probability": 0.35,
+    "payment_reduction_factor": 0.3,
+    "bill_inflation_probability": 0.25,
+    "bill_inflation_factor": 1.5
+  },
+  "output_sha256": "fb3ad0341e949e7e7961c7ea127397634b77ffdea15a69016271b1a10ed39297"
+}
