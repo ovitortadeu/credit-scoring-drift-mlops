@@ -19,7 +19,10 @@ from sklearn.metrics import (
 )
 
 from src.data.schema import COLUMN_MAPPING, FEATURE_COLUMNS, TARGET_COLUMN
+from src.observability.logging_config import setup_logging
 from src.validation.schema import validate
+
+logger = setup_logging(__name__)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 REPORTS_DIR = PROJECT_ROOT / "reports"
@@ -82,6 +85,8 @@ def write_markdown(report: dict) -> None:
 
 
 def main() -> None:
+    logger.info("Iniciando avaliacao dos modelos", extra={"event": "evaluation_started"})
+
     training = json.loads((REPORTS_DIR / "training_summary.json").read_text(encoding="utf-8"))
     split = json.loads((REPORTS_DIR / "split_summary.json").read_text(encoding="utf-8"))
 
@@ -100,6 +105,10 @@ def main() -> None:
 
     # Contrato Pandera: gate obrigatorio antes de qualquer uso dos dados.
     validate(data)
+    logger.info(
+        "Contrato de dados validado para o teste",
+        extra={"event": "data_contract_passed", "data": {"dataset": "test", "rows": len(data)}},
+    )
 
     if data.columns.tolist() != list(COLUMN_MAPPING.values()):
         raise ValueError("As colunas do teste diferem do schema.")
@@ -175,6 +184,12 @@ def main() -> None:
         print("Matriz: linhas = classe real; colunas = classe prevista [0, 1]")
         print(matrix)
 
+        logger.info(
+            "Avaliacao concluida para %s",
+            name,
+            extra={"event": "model_evaluated", "data": {"model": name, "metrics": metrics}},
+        )
+
     (REPORTS_DIR / "baseline_metrics.json").write_text(
         json.dumps(report, indent=2, ensure_ascii=False, allow_nan=False) + "\n",
         encoding="utf-8",
@@ -184,6 +199,17 @@ def main() -> None:
     print("\nRelatorios gerados:")
     print(REPORTS_DIR / "baseline_metrics.json")
     print(REPORTS_DIR / "baseline_report.md")
+
+    logger.info(
+        "Avaliacao concluida",
+        extra={
+            "event": "evaluation_completed",
+            "data": {
+                "rows": report["test_rows"],
+                "report_path": str(REPORTS_DIR / "baseline_metrics.json"),
+            },
+        },
+    )
 
 
 if __name__ == "__main__":

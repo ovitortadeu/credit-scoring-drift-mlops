@@ -27,6 +27,9 @@ import numpy as np
 import pandas as pd
 
 from src.data.schema import TARGET_COLUMN
+from src.observability.logging_config import setup_logging
+
+logger = setup_logging(__name__)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 PRODUCTION_BASE_PATH = PROJECT_ROOT / "data" / "production" / "production_base.csv"
@@ -217,9 +220,23 @@ def save_drifted_dataset(data: pd.DataFrame, parameters: dict) -> None:
     print(f"Registros: {len(data)}")
     print(f"Manifesto salvo em: {DRIFT_REPORT_PATH}")
 
+    logger.info(
+        "Simulacao de drift concluida",
+        extra={
+            "event": "drift_simulation_completed",
+            "data": {
+                "rows": len(data),
+                "output_sha256": report["output_sha256"],
+                "report_path": str(DRIFT_REPORT_PATH),
+            },
+        },
+    )
+
 
 def main() -> None:
     """Ponto de entrada: aplica drift e salva os artefatos."""
+    logger.info("Iniciando simulacao de drift", extra={"event": "drift_simulation_started"})
+
     parameters = {
         "seed": 42,
         "delay_probability": 0.40,

@@ -11,6 +11,9 @@ import pandas as pd
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, roc_auc_score
 
 from src.data.schema import FEATURE_COLUMNS, TARGET_COLUMN
+from src.observability.logging_config import setup_logging
+
+logger = setup_logging(__name__)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 MODEL_PATH = PROJECT_ROOT / "models" / "logistic_regression.joblib"
@@ -44,6 +47,8 @@ def evaluate_dataset(pipeline, df: pd.DataFrame) -> dict:
 
 
 def main() -> None:
+    logger.info("Iniciando avaliacao de impacto do drift", extra={"event": "drift_impact_started"})
+
     print(f"1. Carregando modelo de: {MODEL_PATH.name}...")
     pipeline = joblib.load(MODEL_PATH)
 
@@ -102,6 +107,18 @@ def main() -> None:
     REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
     REPORT_PATH.write_text(json.dumps(summary, indent=2), encoding="utf-8")
     print(f"\nResumo do impacto salvo em: {REPORT_PATH}")
+
+    logger.info(
+        "Avaliacao de impacto do drift concluida",
+        extra={
+            "event": "drift_impact_completed",
+            "data": {
+                "base_default_rate": base_res["predicted_default_rate"],
+                "drifted_default_rate": drifted_res["predicted_default_rate"],
+                "report_path": str(REPORT_PATH),
+            },
+        },
+    )
 
 
 if __name__ == "__main__":
