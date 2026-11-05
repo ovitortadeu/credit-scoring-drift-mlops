@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import mlflow
 import pandas as pd
 from evidently import Report
 from evidently.presets import DataDriftPreset
@@ -12,6 +13,7 @@ from evidently.presets import DataDriftPreset
 from src.data.schema import FEATURE_COLUMNS
 from src.observability.alerts import check_drift_alerts, save_alerts
 from src.observability.logging_config import setup_logging
+from src.observability.tracking import configure_mlflow
 
 logger = setup_logging(__name__)
 
@@ -20,6 +22,8 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 REFERENCE_PATH = PROJECT_ROOT / "data" / "reference" / "reference.csv"
 CURRENT_PATH = PROJECT_ROOT / "data" / "production" / "production_drifted.csv"
 REPORTS_DIR = PROJECT_ROOT / "reports"
+MLFLOW_EXPERIMENT = "credit-scoring-drift"
+DRIFTED_COLUMNS_COUNT_METRIC_TYPE = "evidently:metric_v2:DriftedColumnsCount"
 
 
 def load_datasets() -> tuple[pd.DataFrame, pd.DataFrame]:
@@ -54,6 +58,7 @@ def save_reports(report_result) -> None:
 
 def main() -> None:
     logger.info("Iniciando deteccao de drift", extra={"event": "drift_detection_started"})
+    configure_mlflow(MLFLOW_EXPERIMENT)
 
     print("1. Carregando datasets...")
     reference_df, current_df = load_datasets()
@@ -82,6 +87,21 @@ def main() -> None:
     alerts = check_drift_alerts(report_dict)
     save_alerts(alerts)
     print(f"Alertas de drift gerados: {len(alerts)}")
+
+    with mlflow.start_run(run_name="drift-detection"):
+        mlflow.log_param("reference_rows", len(reference_df))
+        mlflow.log_param("current_rows", len(current_df))
+
+        for metric in report_dict.get("metrics", []):
+            if metric.get("config", {}).get("type") == DRIFTED_COLUMNS_COUNT_METRIC_TYPE:
+                value = metric.get("value", {})
+                mlflow.log_metric("drifted_columns_count", value.get("count", 0))
+                mlflow.log_metric("drifted_columns_share", value.get("share", 0))
+
+        mlflow.log_metric("alerts_raised", len(alerts))
+        mlflow.log_artifact(str(REPORTS_DIR / "data_drift_report.json"))
+        if (REPORTS_DIR / "data_drift_report.html").exists():
+            mlflow.log_artifact(str(REPORTS_DIR / "data_drift_report.html"))
 
 
 if __name__ == "__main__":
