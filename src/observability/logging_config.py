@@ -29,8 +29,13 @@ ROOT_LOGGER_NAME = "credit_scoring"
 _CONFIGURED_ATTR = "_credit_scoring_configured"
 
 # Atributos padrao de um LogRecord, usados para isolar os campos extras
-# passados via `extra={...}` nas chamadas de log.
+# passados via `extra={...}` nas chamadas de log. "asctime" nao esta entre
+# os atributos padrao de um LogRecord recem-criado, mas o Formatter do
+# console o injeta no record (mutacao compartilhada entre handlers) ao
+# processar "%(asctime)s" antes do handler de arquivo rodar — por isso
+# precisa ser excluido explicitamente.
 _STANDARD_RECORD_ATTRS = set(logging.LogRecord("", 0, "", 0, "", (), None).__dict__.keys())
+_STANDARD_RECORD_ATTRS.add("asctime")
 
 
 class JsonLinesFormatter(logging.Formatter):

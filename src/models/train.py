@@ -18,7 +18,10 @@ from sklearn.pipeline import Pipeline
 
 from src.data.preprocessing import build_preprocessor
 from src.data.schema import COLUMN_MAPPING, FEATURE_COLUMNS, ID_COLUMN, TARGET_COLUMN
+from src.observability.logging_config import setup_logging
 from src.validation.schema import validate
+
+logger = setup_logging(__name__)
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 REFERENCE_PATH = PROJECT_ROOT / "data/reference/reference.csv"
@@ -55,6 +58,8 @@ def build_models() -> dict[str, Pipeline]:
 
 
 def main() -> None:
+    logger.info("Iniciando treinamento do modelo baseline", extra={"event": "train_started"})
+
     split_report = json.loads(SPLIT_REPORT_PATH.read_text(encoding="utf-8"))
     reference_hash = hashlib.sha256(REFERENCE_PATH.read_bytes()).hexdigest()
     expected = split_report["splits"]["reference"]
@@ -66,6 +71,13 @@ def main() -> None:
 
     # Contrato Pandera: gate obrigatorio antes de qualquer uso dos dados.
     validate(data)
+    logger.info(
+        "Contrato de dados validado para a referencia",
+        extra={
+            "event": "data_contract_passed",
+            "data": {"dataset": "reference", "rows": len(data)},
+        },
+    )
 
     if data.columns.tolist() != list(COLUMN_MAPPING.values()):
         raise ValueError("As colunas da referencia diferem do schema.")
@@ -110,7 +122,11 @@ def main() -> None:
 
     # Treina ambos antes de gravar os artefatos.
     for name, pipeline in models.items():
-        print(f"Treinando: {name}...")
+        logger.info(
+            "Treinando modelo: %s",
+            name,
+            extra={"event": "model_train_started", "data": {"model": name}},
+        )
         started = perf_counter()
 
         # Interrompe se a regressao nao convergir.
@@ -133,7 +149,15 @@ def main() -> None:
         if hasattr(classifier, "n_iter_"):
             report["models"][name]["iterations"] = classifier.n_iter_.tolist()
 
-        print(f"Treinamento concluido em {elapsed:.2f} segundos.")
+        logger.info(
+            "Treinamento de %s concluido em %.2f segundos",
+            name,
+            elapsed,
+            extra={
+                "event": "model_train_completed",
+                "data": {"model": name, "training_seconds": elapsed},
+            },
+        )
 
     MODELS_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -146,7 +170,7 @@ def main() -> None:
             model_path.read_bytes()
         ).hexdigest()
 
-        print(f"Pipeline salvo em: {model_path}")
+        logger.info("Pipeline salvo em: %s", model_path, extra={"event": "model_artifact_saved"})
 
     TRAINING_REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
     TRAINING_REPORT_PATH.write_text(
@@ -154,10 +178,17 @@ def main() -> None:
         encoding="utf-8",
     )
 
-    print(f"\nRegistros utilizados: {len(data)}")
-    print(f"Features de entrada: {len(FEATURE_COLUMNS)}")
-    print(f"Resumo salvo em: {TRAINING_REPORT_PATH}")
-    print("Treinamento concluido. Avaliacao ainda nao realizada.")
+    logger.info(
+        "Treinamento concluido",
+        extra={
+            "event": "train_completed",
+            "data": {
+                "rows": len(data),
+                "features": len(FEATURE_COLUMNS),
+                "report_path": str(TRAINING_REPORT_PATH),
+            },
+        },
+    )
 
 
 if __name__ == "__main__":
