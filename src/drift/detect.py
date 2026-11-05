@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 import pandas as pd
@@ -9,6 +10,7 @@ from evidently import Report
 from evidently.presets import DataDriftPreset
 
 from src.data.schema import FEATURE_COLUMNS
+from src.observability.alerts import check_drift_alerts, save_alerts
 from src.observability.logging_config import setup_logging
 
 logger = setup_logging(__name__)
@@ -74,6 +76,12 @@ def main() -> None:
             },
         },
     )
+
+    print("4. Avaliando regras de alerta...")
+    report_dict = json.loads((REPORTS_DIR / "data_drift_report.json").read_text(encoding="utf-8"))
+    alerts = check_drift_alerts(report_dict)
+    save_alerts(alerts)
+    print(f"Alertas de drift gerados: {len(alerts)}")
 
 
 if __name__ == "__main__":
