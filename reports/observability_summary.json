@@ -1,0 +1,65 @@
+{
+  "generated_at_utc": "2026-11-05T22:08:10.353759+00:00",
+  "pipeline_stages": {
+    "train": {
+      "status": "ok",
+      "trained_at_utc": "2026-10-25T18:57:49.740882+00:00",
+      "training_rows": 17999
+    },
+    "evaluate": {
+      "status": "ok",
+      "evaluated_at_utc": "2026-10-25T18:58:14.335077+00:00",
+      "test_rows": 6000
+    },
+    "drift_simulation": {
+      "status": "ok",
+      "generated_at_utc": "2026-10-25T19:32:15.284797+00:00",
+      "rows": 6001
+    },
+    "drift_detection": {
+      "status": "ok",
+      "drifted_columns_count": 6.0,
+      "drifted_columns_share": 0.2608695652173913,
+      "columns_above_threshold": [
+        "pay_0",
+        "pay_2",
+        "pay_3",
+        "pay_4",
+        "pay_5",
+        "pay_6"
+      ]
+    },
+    "drift_impact": {
+      "status": "ok",
+      "model": "logistic_regression.joblib"
+    }
+  },
+  "log_counts": {
+    "INFO": 26,
+    "WARNING": 6,
+    "ERROR": 2
+  },
+  "model_metrics": {
+    "logistic_regression": {
+      "accuracy": 0.8175,
+      "precision": 0.6652421652421653,
+      "recall": 0.3519216277317257,
+      "f1": 0.4603252833908329,
+      "roc_auc": 0.7530948282965959
+    },
+    "dummy": {
+      "accuracy": 0.7788333333333334,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "roc_auc": 0.5
+    }
+  },
+  "alerts": {
+    "total": 7,
+    "by_type": {
+      "contract_violation": 1,
+      "drift": 6
+    }
+  }
+}
