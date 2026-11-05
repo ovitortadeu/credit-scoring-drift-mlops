@@ -9,6 +9,9 @@ from evidently import Report
 from evidently.presets import DataDriftPreset
 
 from src.data.schema import FEATURE_COLUMNS
+from src.observability.logging_config import setup_logging
+
+logger = setup_logging(__name__)
 
 # 1. Caminhos do projeto
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -48,6 +51,8 @@ def save_reports(report_result) -> None:
 
 
 def main() -> None:
+    logger.info("Iniciando deteccao de drift", extra={"event": "drift_detection_started"})
+
     print("1. Carregando datasets...")
     reference_df, current_df = load_datasets()
 
@@ -57,6 +62,18 @@ def main() -> None:
     print("3. Salvando artefatos...")
     save_reports(report)
     print("\nDetecção concluída com sucesso!")
+
+    logger.info(
+        "Deteccao de drift concluida",
+        extra={
+            "event": "drift_detection_completed",
+            "data": {
+                "reference_rows": len(reference_df),
+                "current_rows": len(current_df),
+                "report_path": str(REPORTS_DIR / "data_drift_report.json"),
+            },
+        },
+    )
 
 
 if __name__ == "__main__":
