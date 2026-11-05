@@ -10,6 +10,8 @@ from pathlib import Path
 from time import perf_counter
 
 import joblib
+import mlflow
+import mlflow.sklearn
 import pandas as pd
 from sklearn.dummy import DummyClassifier
 from sklearn.exceptions import ConvergenceWarning
@@ -19,6 +21,7 @@ from sklearn.pipeline import Pipeline
 from src.data.preprocessing import build_preprocessor
 from src.data.schema import COLUMN_MAPPING, FEATURE_COLUMNS, ID_COLUMN, TARGET_COLUMN
 from src.observability.logging_config import setup_logging
+from src.observability.tracking import configure_mlflow
 from src.validation.schema import validate
 
 logger = setup_logging(__name__)
@@ -28,6 +31,7 @@ REFERENCE_PATH = PROJECT_ROOT / "data/reference/reference.csv"
 SPLIT_REPORT_PATH = PROJECT_ROOT / "reports/split_summary.json"
 MODELS_DIR = PROJECT_ROOT / "models"
 TRAINING_REPORT_PATH = PROJECT_ROOT / "reports/training_summary.json"
+MLFLOW_EXPERIMENT = "credit-scoring-baseline"
 
 
 def build_models() -> dict[str, Pipeline]:
@@ -59,6 +63,7 @@ def build_models() -> dict[str, Pipeline]:
 
 def main() -> None:
     logger.info("Iniciando treinamento do modelo baseline", extra={"event": "train_started"})
+    configure_mlflow(MLFLOW_EXPERIMENT)
 
     split_report = json.loads(SPLIT_REPORT_PATH.read_text(encoding="utf-8"))
     reference_hash = hashlib.sha256(REFERENCE_PATH.read_bytes()).hexdigest()
@@ -121,43 +126,52 @@ def main() -> None:
     models = build_models()
 
     # Treina ambos antes de gravar os artefatos.
-    for name, pipeline in models.items():
-        logger.info(
-            "Treinando modelo: %s",
-            name,
-            extra={"event": "model_train_started", "data": {"model": name}},
-        )
-        started = perf_counter()
+    with mlflow.start_run(run_name="train"):
+        mlflow.log_param("reference_sha256", reference_hash)
+        mlflow.log_param("training_rows", len(data))
 
-        # Interrompe se a regressao nao convergir.
-        with warnings.catch_warnings():
-            warnings.simplefilter("error", ConvergenceWarning)
-            pipeline.fit(x_train, y_train)
+        for name, pipeline in models.items():
+            logger.info(
+                "Treinando modelo: %s",
+                name,
+                extra={"event": "model_train_started", "data": {"model": name}},
+            )
+            started = perf_counter()
 
-        elapsed = perf_counter() - started
-        classifier = pipeline.named_steps["classifier"]
+            with mlflow.start_run(run_name=name, nested=True):
+                # Interrompe se a regressao nao convergir.
+                with warnings.catch_warnings():
+                    warnings.simplefilter("error", ConvergenceWarning)
+                    pipeline.fit(x_train, y_train)
 
-        report["models"][name] = {
-            "training_seconds": elapsed,
-            "classifier_params": classifier.get_params(),
-            "classes": classifier.classes_.tolist(),
-            "transformed_features": (
-                pipeline.named_steps["preprocessor"].get_feature_names_out().tolist()
-            ),
-        }
+                elapsed = perf_counter() - started
+                classifier = pipeline.named_steps["classifier"]
 
-        if hasattr(classifier, "n_iter_"):
-            report["models"][name]["iterations"] = classifier.n_iter_.tolist()
+                report["models"][name] = {
+                    "training_seconds": elapsed,
+                    "classifier_params": classifier.get_params(),
+                    "classes": classifier.classes_.tolist(),
+                    "transformed_features": (
+                        pipeline.named_steps["preprocessor"].get_feature_names_out().tolist()
+                    ),
+                }
 
-        logger.info(
-            "Treinamento de %s concluido em %.2f segundos",
-            name,
-            elapsed,
-            extra={
-                "event": "model_train_completed",
-                "data": {"model": name, "training_seconds": elapsed},
-            },
-        )
+                if hasattr(classifier, "n_iter_"):
+                    report["models"][name]["iterations"] = classifier.n_iter_.tolist()
+
+                logger.info(
+                    "Treinamento de %s concluido em %.2f segundos",
+                    name,
+                    elapsed,
+                    extra={
+                        "event": "model_train_completed",
+                        "data": {"model": name, "training_seconds": elapsed},
+                    },
+                )
+
+                mlflow.log_param("model", name)
+                mlflow.log_metric("training_seconds", elapsed)
+                mlflow.sklearn.log_model(pipeline, name="model")
 
     MODELS_DIR.mkdir(parents=True, exist_ok=True)
 
