@@ -15,6 +15,7 @@ dependencies = [
     "evidently>=0.4.30",
     "joblib>=1.4.0",
     "ucimlrepo>=0.0.7",
+    "mlflow>=3.18.0",
 ]
 
 [project.optional-dependencies]

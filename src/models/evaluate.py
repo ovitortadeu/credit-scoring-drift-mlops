@@ -7,6 +7,7 @@ from importlib.metadata import version
 from pathlib import Path
 
 import joblib
+import mlflow
 import numpy as np
 import pandas as pd
 from sklearn.metrics import (
@@ -20,6 +21,7 @@ from sklearn.metrics import (
 
 from src.data.schema import COLUMN_MAPPING, FEATURE_COLUMNS, TARGET_COLUMN
 from src.observability.logging_config import setup_logging
+from src.observability.tracking import configure_mlflow
 from src.validation.schema import validate
 
 logger = setup_logging(__name__)
@@ -27,6 +29,7 @@ logger = setup_logging(__name__)
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 REPORTS_DIR = PROJECT_ROOT / "reports"
 TEST_PATH = PROJECT_ROOT / "data/test/test.csv"
+MLFLOW_EXPERIMENT = "credit-scoring-baseline"
 
 
 def file_hash(path: Path) -> str:
@@ -86,6 +89,7 @@ def write_markdown(report: dict) -> None:
 
 def main() -> None:
     logger.info("Iniciando avaliacao dos modelos", extra={"event": "evaluation_started"})
+    configure_mlflow(MLFLOW_EXPERIMENT)
 
     training = json.loads((REPORTS_DIR / "training_summary.json").read_text(encoding="utf-8"))
     split = json.loads((REPORTS_DIR / "split_summary.json").read_text(encoding="utf-8"))
@@ -136,59 +140,66 @@ def main() -> None:
         "models": {},
     }
 
-    for name in ("logistic_regression", "dummy"):
-        info = training["models"][name]
-        model_path = PROJECT_ROOT / info["artifact"]
+    with mlflow.start_run(run_name="evaluate"):
+        for name in ("logistic_regression", "dummy"):
+            info = training["models"][name]
+            model_path = PROJECT_ROOT / info["artifact"]
 
-        if file_hash(model_path) != info["artifact_sha256"]:
-            raise ValueError(f"O artefato de {name} difere do treinamento.")
+            if file_hash(model_path) != info["artifact_sha256"]:
+                raise ValueError(f"O artefato de {name} difere do treinamento.")
 
-        # Carrega somente o artefato local gerado pelo nosso treinamento.
-        pipeline = joblib.load(model_path)
+            # Carrega somente o artefato local gerado pelo nosso treinamento.
+            pipeline = joblib.load(model_path)
 
-        if list(pipeline.classes_) != [0, 1]:
-            raise ValueError(f"Classes inesperadas no modelo {name}.")
+            if list(pipeline.classes_) != [0, 1]:
+                raise ValueError(f"Classes inesperadas no modelo {name}.")
 
-        predictions = pipeline.predict(x_test)
-        probabilities = pipeline.predict_proba(x_test)[:, 1]
+            predictions = pipeline.predict(x_test)
+            probabilities = pipeline.predict_proba(x_test)[:, 1]
 
-        if not np.isfinite(probabilities).all():
-            raise ValueError(f"Probabilidades nao finitas em {name}.")
+            if not np.isfinite(probabilities).all():
+                raise ValueError(f"Probabilidades nao finitas em {name}.")
 
-        if ((probabilities < 0) | (probabilities > 1)).any():
-            raise ValueError(f"Probabilidades fora de [0, 1] em {name}.")
+            if ((probabilities < 0) | (probabilities > 1)).any():
+                raise ValueError(f"Probabilidades fora de [0, 1] em {name}.")
 
-        metrics = {
-            "accuracy": float(accuracy_score(y_test, predictions)),
-            "precision": float(precision_score(y_test, predictions, pos_label=1, zero_division=0)),
-            "recall": float(recall_score(y_test, predictions, pos_label=1, zero_division=0)),
-            "f1": float(f1_score(y_test, predictions, pos_label=1, zero_division=0)),
-            "roc_auc": float(roc_auc_score(y_test, probabilities)),
-        }
+            metrics = {
+                "accuracy": float(accuracy_score(y_test, predictions)),
+                "precision": float(
+                    precision_score(y_test, predictions, pos_label=1, zero_division=0)
+                ),
+                "recall": float(recall_score(y_test, predictions, pos_label=1, zero_division=0)),
+                "f1": float(f1_score(y_test, predictions, pos_label=1, zero_division=0)),
+                "roc_auc": float(roc_auc_score(y_test, probabilities)),
+            }
 
-        matrix = confusion_matrix(y_test, predictions, labels=[0, 1])
+            with mlflow.start_run(run_name=name, nested=True):
+                mlflow.log_param("model", name)
+                mlflow.log_metrics(metrics)
 
-        report["models"][name] = {
-            "artifact": info["artifact"],
-            "artifact_sha256": info["artifact_sha256"],
-            "metrics": metrics,
-            "confusion_matrix": matrix.tolist(),
-            "confusion_matrix_labels": [0, 1],
-            "predicted_positive_count": int((predictions == 1).sum()),
-        }
+            matrix = confusion_matrix(y_test, predictions, labels=[0, 1])
 
-        print(f"\nMODELO: {name}")
-        for metric, value in metrics.items():
-            print(f"{metric}: {value:.4f}")
+            report["models"][name] = {
+                "artifact": info["artifact"],
+                "artifact_sha256": info["artifact_sha256"],
+                "metrics": metrics,
+                "confusion_matrix": matrix.tolist(),
+                "confusion_matrix_labels": [0, 1],
+                "predicted_positive_count": int((predictions == 1).sum()),
+            }
 
-        print("Matriz: linhas = classe real; colunas = classe prevista [0, 1]")
-        print(matrix)
+            print(f"\nMODELO: {name}")
+            for metric, value in metrics.items():
+                print(f"{metric}: {value:.4f}")
 
-        logger.info(
-            "Avaliacao concluida para %s",
-            name,
-            extra={"event": "model_evaluated", "data": {"model": name, "metrics": metrics}},
-        )
+            print("Matriz: linhas = classe real; colunas = classe prevista [0, 1]")
+            print(matrix)
+
+            logger.info(
+                "Avaliacao concluida para %s",
+                name,
+                extra={"event": "model_evaluated", "data": {"model": name, "metrics": metrics}},
+            )
 
     (REPORTS_DIR / "baseline_metrics.json").write_text(
         json.dumps(report, indent=2, ensure_ascii=False, allow_nan=False) + "\n",

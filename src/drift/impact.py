@@ -6,12 +6,14 @@ import json
 from pathlib import Path
 
 import joblib
+import mlflow
 import numpy as np
 import pandas as pd
 from sklearn.metrics import accuracy_score, f1_score, precision_score, recall_score, roc_auc_score
 
 from src.data.schema import FEATURE_COLUMNS, TARGET_COLUMN
 from src.observability.logging_config import setup_logging
+from src.observability.tracking import configure_mlflow
 
 logger = setup_logging(__name__)
 
@@ -20,6 +22,7 @@ MODEL_PATH = PROJECT_ROOT / "models" / "logistic_regression.joblib"
 BASE_PATH = PROJECT_ROOT / "data" / "production" / "production_base.csv"
 DRIFTED_PATH = PROJECT_ROOT / "data" / "production" / "production_drifted.csv"
 REPORT_PATH = PROJECT_ROOT / "reports" / "drift_impact_summary.json"
+MLFLOW_EXPERIMENT = "credit-scoring-drift"
 
 
 def evaluate_dataset(pipeline, df: pd.DataFrame) -> dict:
@@ -48,6 +51,7 @@ def evaluate_dataset(pipeline, df: pd.DataFrame) -> dict:
 
 def main() -> None:
     logger.info("Iniciando avaliacao de impacto do drift", extra={"event": "drift_impact_started"})
+    configure_mlflow(MLFLOW_EXPERIMENT)
 
     print(f"1. Carregando modelo de: {MODEL_PATH.name}...")
     pipeline = joblib.load(MODEL_PATH)
@@ -107,6 +111,15 @@ def main() -> None:
     REPORT_PATH.parent.mkdir(parents=True, exist_ok=True)
     REPORT_PATH.write_text(json.dumps(summary, indent=2), encoding="utf-8")
     print(f"\nResumo do impacto salvo em: {REPORT_PATH}")
+
+    with mlflow.start_run(run_name="drift-impact"):
+        mlflow.log_metrics({f"base_{key}": value for key, value in base_res["metrics"].items()})
+        mlflow.log_metrics(
+            {f"drifted_{key}": value for key, value in drifted_res["metrics"].items()}
+        )
+        mlflow.log_metric("base_predicted_default_rate", base_res["predicted_default_rate"])
+        mlflow.log_metric("drifted_predicted_default_rate", drifted_res["predicted_default_rate"])
+        mlflow.log_artifact(str(REPORT_PATH))
 
     logger.info(
         "Avaliacao de impacto do drift concluida",

@@ -1,0 +1,63 @@
+[
+  {
+    "timestamp": "2026-11-05T22:05:24.773488+00:00",
+    "type": "contract_violation",
+    "severity": "error",
+    "batch": "invalid_batch.csv",
+    "violation_count": 14
+  },
+  {
+    "timestamp": "2026-11-05T22:05:34.726140+00:00",
+    "type": "drift",
+    "severity": "critical",
+    "column": "pay_0",
+    "value": 0.7231123992369497,
+    "threshold": 0.1,
+    "method": "Wasserstein distance (normed)"
+  },
+  {
+    "timestamp": "2026-11-05T22:05:34.726258+00:00",
+    "type": "drift",
+    "severity": "critical",
+    "column": "pay_2",
+    "value": 0.6858449203913006,
+    "threshold": 0.1,
+    "method": "Wasserstein distance (normed)"
+  },
+  {
+    "timestamp": "2026-11-05T22:05:34.726328+00:00",
+    "type": "drift",
+    "severity": "critical",
+    "column": "pay_3",
+    "value": 0.6755130194512174,
+    "threshold": 0.1,
+    "method": "Wasserstein distance (normed)"
+  },
+  {
+    "timestamp": "2026-11-05T22:05:34.726433+00:00",
+    "type": "drift",
+    "severity": "critical",
+    "column": "pay_4",
+    "value": 0.690991355449809,
+    "threshold": 0.1,
+    "method": "Wasserstein distance (normed)"
+  },
+  {
+    "timestamp": "2026-11-05T22:05:34.726522+00:00",
+    "type": "drift",
+    "severity": "critical",
+    "column": "pay_5",
+    "value": 0.7053091200812412,
+    "threshold": 0.1,
+    "method": "Wasserstein distance (normed)"
+  },
+  {
+    "timestamp": "2026-11-05T22:05:34.726589+00:00",
+    "type": "drift",
+    "severity": "critical",
+    "column": "pay_6",
+    "value": 0.7263753917912041,
+    "threshold": 0.1,
+    "method": "Wasserstein distance (normed)"
+  }
+]

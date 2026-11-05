@@ -8,6 +8,7 @@ from pathlib import Path
 import pandas as pd
 import pandera.errors
 
+from src.observability.alerts import check_contract_alert, save_alerts
 from src.observability.logging_config import setup_logging
 from src.validation.schema import validate
 
@@ -42,6 +43,9 @@ def run(path: Path) -> int:
                 },
             },
         )
+
+        alert = check_contract_alert(path.name, len(err.failure_cases))
+        save_alerts([alert] if alert else [])
         return 1
 
     print(f"OK — {len(data)} linhas aprovadas pelo contrato ({path.name}).")
