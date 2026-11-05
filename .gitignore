@@ -61,6 +61,10 @@ reports/*.html
 *.log
 logs/
 
+# MLflow (tracking store local gerado em runtime)
+mlruns/
+mlartifacts/
+
 # Secrets / env
 .env
 .env.local
