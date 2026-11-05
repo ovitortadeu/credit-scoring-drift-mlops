@@ -4,6 +4,10 @@ from pathlib import Path
 
 import pandas as pd
 
+from src.observability.logging_config import setup_logging
+
+logger = setup_logging(__name__)
+
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 INVALID_PATH = PROJECT_ROOT / "data" / "production" / "invalid_batch.csv"
 
@@ -56,6 +60,14 @@ def main() -> None:
     batch.to_csv(INVALID_PATH, index=False, encoding="utf-8", lineterminator="\n")
     print(f"Lote invalido gerado em: {INVALID_PATH}")
     print(f"Linhas: {len(batch)}")
+
+    logger.info(
+        "Lote invalido gerado para demonstracao do contrato",
+        extra={
+            "event": "invalid_batch_generated",
+            "data": {"path": str(INVALID_PATH), "rows": len(batch)},
+        },
+    )
 
 
 if __name__ == "__main__":

@@ -8,7 +8,10 @@ from pathlib import Path
 import pandas as pd
 import pandera.errors
 
+from src.observability.logging_config import setup_logging
 from src.validation.schema import validate
+
+logger = setup_logging(__name__)
 
 
 def run(path: Path) -> int:
@@ -25,9 +28,31 @@ def run(path: Path) -> int:
         print(f"Linhas: {len(data)}  Violacoes: {len(err.failure_cases)}")
         print()
         print(err.failure_cases.to_string(index=False))
+
+        logger.error(
+            "Lote %s bloqueado pelo contrato de dados (%d violacoes)",
+            path.name,
+            len(err.failure_cases),
+            extra={
+                "event": "validation_blocked",
+                "data": {
+                    "path": str(path),
+                    "rows": len(data),
+                    "violation_count": len(err.failure_cases),
+                },
+            },
+        )
         return 1
 
     print(f"OK — {len(data)} linhas aprovadas pelo contrato ({path.name}).")
+    logger.info(
+        "Lote %s aprovado pelo contrato de dados",
+        path.name,
+        extra={
+            "event": "validation_passed",
+            "data": {"path": str(path), "rows": len(data)},
+        },
+    )
     return 0
 
 
