@@ -82,6 +82,18 @@ Dois experimentos são usados:
 uv run mlflow ui --backend-store-uri sqlite:///mlruns/mlflow.db
 ```
 
+Lista de experimentos na tela inicial do MLflow:
+
+![Tela inicial do MLflow listando os experimentos credit-scoring-drift e credit-scoring-baseline](images/mlflow_experiments.png)
+
+Métricas registradas para o run aninhado `logistic_regression` dentro do experimento `credit-scoring-baseline` (acurácia, precisão, recall, F1 e ROC AUC):
+
+![Métricas do run logistic_regression no MLflow](images/mlflow_run_metrics.png)
+
+Métricas do run `drift-detection` no experimento `credit-scoring-drift` (contagem e percentual de colunas com drift, alertas gerados):
+
+![Métricas do run drift-detection no MLflow](images/mlflow_drift_run.png)
+
 ---
 
 ## Agregador de métricas
@@ -101,7 +113,9 @@ Esse JSON é a única fonte de dados consultada pelo dashboard — qualquer etap
 
 `src/observability/dashboard.py` renderiza `reports/observability_summary.json` e `reports/alerts.json` em um único arquivo HTML autocontido (sem dependências externas de JS/CSS), com cartões de status por etapa, contagem de logs por nível, tabela de métricas dos modelos, colunas com drift e tabela de alertas.
 
-O HTML gerado não é versionado (`reports/*.html` está no `.gitignore`, mesmo padrão do relatório do Evidently), mas é reprodutível a qualquer momento a partir dos JSONs commitados.
+O HTML gerado não é versionado (`reports/*.html` está no `.gitignore`, mesmo padrão do relatório do Evidently), mas é reprodutível a qualquer momento a partir dos JSONs commitados. Um snapshot estático é publicado via GitHub Pages (branch `gh-pages`) a cada atualização manual do dashboard.
+
+![Dashboard de observabilidade com saude do pipeline, logs, metricas dos modelos e alertas](images/dashboard.png)
 
 ---
 
