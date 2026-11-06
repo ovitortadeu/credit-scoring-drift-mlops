@@ -62,6 +62,10 @@ Para colunas numéricas, utilizou-se a métrica normalizada da **Distância de W
 
 O teste comprovou com rigor estatístico que o fenômeno foi puramente comportamental (inadimplência e capacidade financeira), sem contaminação do perfil demográfico.
 
+Trecho do relatório interativo gerado pelo Evidently (`reports/data_drift_report.html`), com as distribuições de referência e produção lado a lado para cada coluna:
+
+![Relatório de drift do Evidently mostrando as colunas pay_0 a pay_6 com drift detectado](images/drift_report.png)
+
 ---
 
 ## O Impacto da Degradação Silenciosa no Modelo
