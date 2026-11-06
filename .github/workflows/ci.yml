@@ -31,3 +31,30 @@ jobs:
 
       - name: Testes (pytest)
         run: uv run pytest
+
+  data-contract-check:
+    name: Verificacao do contrato de dados
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do repositorio
+        uses: actions/checkout@v4
+
+      - name: Instalar uv
+        uses: astral-sh/setup-uv@v3
+        with:
+          enable-cache: true
+
+      - name: Instalar dependencias
+        run: uv sync --all-extras
+
+      - name: Gerar lote invalido de demonstracao
+        run: uv run python -m src.validation.invalid_batch
+
+      - name: Confirmar que o contrato bloqueia o lote invalido
+        run: |
+          if uv run python -m src.validation.cli data/production/invalid_batch.csv; then
+            echo "Erro: o contrato deveria ter bloqueado o lote invalido (exit code esperado: 1)."
+            exit 1
+          fi
+          echo "Contrato bloqueou o lote invalido como esperado."
