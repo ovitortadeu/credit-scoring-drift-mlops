@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<title>Observabilidade — Credit Scoring</title>
+<style>
+  body { font-family: -apple-system, Segoe UI, sans-serif; margin: 2rem; background: #0f172a; color: #e2e8f0; }
+  h1 { font-size: 1.5rem; }
+  h2 { margin-top: 2rem; border-bottom: 1px solid #334155; padding-bottom: 0.25rem; }
+  .meta { color: #94a3b8; font-size: 0.9rem; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-top: 1rem; }
+  .card { background: #1e293b; border-radius: 8px; padding: 1rem; border: 1px solid #334155; }
+  .card h3 { margin: 0 0 0.5rem 0; text-transform: capitalize; }
+  .card ul { list-style: none; padding: 0; margin: 0.5rem 0 0 0; font-size: 0.85rem; color: #cbd5e1; }
+  .badge { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
+  .badge.ok { background: #14532d; color: #86efac; }
+  .badge.missing { background: #450a0a; color: #fca5a5; }
+  table { border-collapse: collapse; width: 100%; margin-top: 0.5rem; }
+  th, td { border: 1px solid #334155; padding: 0.4rem 0.6rem; text-align: left; font-size: 0.85rem; }
+  th { background: #1e293b; }
+  .stat-row { display: flex; gap: 1.5rem; margin-top: 0.5rem; }
+  .stat { background: #1e293b; border-radius: 8px; padding: 0.75rem 1rem; border: 1px solid #334155; }
+  .stat strong { display: block; font-size: 1.4rem; }
+</style>
+</head>
+<body>
+  <h1>Observabilidade — Credit Scoring</h1>
+  <p class="meta">Gerado em: 2026-11-06T15:04:06.015643+00:00</p>
+
+  <h2>Saude do pipeline</h2>
+  <div class="grid"><div class="card ok"><h3>train</h3><span class="badge ok">OK</span><ul><li><strong>trained_at_utc:</strong> 2026-10-25T18:57:49.740882+00:00</li><li><strong>training_rows:</strong> 17999</li></ul></div><div class="card ok"><h3>evaluate</h3><span class="badge ok">OK</span><ul><li><strong>evaluated_at_utc:</strong> 2026-10-25T18:58:14.335077+00:00</li><li><strong>test_rows:</strong> 6000</li></ul></div><div class="card ok"><h3>drift_simulation</h3><span class="badge ok">OK</span><ul><li><strong>generated_at_utc:</strong> 2026-10-25T19:32:15.284797+00:00</li><li><strong>rows:</strong> 6001</li></ul></div><div class="card ok"><h3>drift_detection</h3><span class="badge ok">OK</span><ul><li><strong>drifted_columns_count:</strong> 6.0</li><li><strong>drifted_columns_share:</strong> 0.2608695652173913</li><li><strong>columns_above_threshold:</strong> [&#x27;pay_0&#x27;, &#x27;pay_2&#x27;, &#x27;pay_3&#x27;, &#x27;pay_4&#x27;, &#x27;pay_5&#x27;, &#x27;pay_6&#x27;]</li></ul></div><div class="card ok"><h3>drift_impact</h3><span class="badge ok">OK</span><ul><li><strong>model:</strong> logistic_regression.joblib</li></ul></div></div>
+
+  <h2>Logs estruturados</h2>
+  <div class="stat-row">
+    <div class="stat">INFO<strong>105</strong></div>
+    <div class="stat">WARNING<strong>42</strong></div>
+    <div class="stat">ERROR<strong>42</strong></div>
+  </div>
+
+  <h2>Metricas dos modelos (conjunto de teste)</h2>
+  <table><thead><tr><th>Modelo</th><th>accuracy</th><th>f1</th><th>precision</th><th>recall</th><th>roc_auc</th></tr></thead><tbody><tr><td>logistic_regression</td><td>0.8175</td><td>0.4603</td><td>0.6652</td><td>0.3519</td><td>0.7531</td></tr><tr><td>dummy</td><td>0.7788</td><td>0.0000</td><td>0.0000</td><td>0.0000</td><td>0.5000</td></tr></tbody></table>
+
+  <h2>Drift detectado</h2>
+  <p>Colunas acima do limiar: <strong>pay_0, pay_2, pay_3, pay_4, pay_5, pay_6</strong></p>
+
+  <h2>Alertas (7 no total)</h2>
+  <table><thead><tr><th>Timestamp</th><th>Tipo</th><th>Severidade</th><th>Origem</th></tr></thead><tbody><tr><td>2026-11-05T22:05:24.773488+00:00</td><td>contract_violation</td><td>error</td><td>invalid_batch.csv</td></tr><tr><td>2026-11-05T22:05:34.726140+00:00</td><td>drift</td><td>critical</td><td>pay_0</td></tr><tr><td>2026-11-05T22:05:34.726258+00:00</td><td>drift</td><td>critical</td><td>pay_2</td></tr><tr><td>2026-11-05T22:05:34.726328+00:00</td><td>drift</td><td>critical</td><td>pay_3</td></tr><tr><td>2026-11-05T22:05:34.726433+00:00</td><td>drift</td><td>critical</td><td>pay_4</td></tr><tr><td>2026-11-05T22:05:34.726522+00:00</td><td>drift</td><td>critical</td><td>pay_5</td></tr><tr><td>2026-11-05T22:05:34.726589+00:00</td><td>drift</td><td>critical</td><td>pay_6</td></tr></tbody></table>
+</body>
+</html>
