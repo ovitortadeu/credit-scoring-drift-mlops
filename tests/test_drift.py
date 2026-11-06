@@ -50,6 +50,8 @@ def test_simulate_drift_preserves_shape(base_production_data: pd.DataFrame) -> N
 
 def test_simulate_drift_complies_with_contract() -> None:
     """Garante que os dados com drift continuam validos segundo o contrato Pandera."""
+    if not PRODUCTION_BASE_PATH.exists():
+        pytest.skip("Base de producao ainda nao gerada (rodar src/data/split.py)")
     drifted = simulate_drift(seed=42)
     validated = validate(drifted)
     assert validated is not None
@@ -65,6 +67,8 @@ def test_simulate_drift_increases_payment_delays(base_production_data: pd.DataFr
 
 def test_simulate_drift_reproducibility() -> None:
     """Garante determinismo: a mesma seed produz resultados exatamente iguais."""
+    if not PRODUCTION_BASE_PATH.exists():
+        pytest.skip("Base de producao ainda nao gerada (rodar src/data/split.py)")
     run_1 = simulate_drift(seed=99)
     run_2 = simulate_drift(seed=99)
     pd.testing.assert_frame_equal(run_1, run_2)
