@@ -2,30 +2,44 @@
 
 Tech Challenge Fase 4 — POS TECH.
 
-Projeto de credit scoring com foco em detecção de drift, qualidade de dados e governança.
+Pipeline de **credit scoring** com contratos de dados, detecção de drift,
+observabilidade e governança (LGPD / model card). Projeto acadêmico —
+**não** é motor de decisão de crédito em produção.
+
+## Papéis do time
+
+| Pessoa | Liderança | Documentação |
+|---|---|---|
+| 1 | Dados e modelo baseline | [`docs/baseline.md`](docs/baseline.md) |
+| 2 | Qualidade e contratos | [`docs/contratos.md`](docs/contratos.md) |
+| 3 | Drift | [`docs/drift.md`](docs/drift.md) |
+| 4 | Observabilidade e CI/CD | [`docs/observabilidade.md`](docs/observabilidade.md) |
+| 5 | Governança e integração | [`docs/lgpd.md`](docs/lgpd.md), [`docs/model_card.md`](docs/model_card.md), [`docs/checklist.md`](docs/checklist.md) |
+
+Roteiro de integração: [`docs/roteiro_integracao.md`](docs/roteiro_integracao.md).
+
+## Stack
+
+- **Modelagem:** scikit-learn (baseline `LogisticRegression` + `DummyClassifier`)
+- **Contratos:** Pandera
+- **Drift:** Evidently
+- **Tracking / obs.:** MLflow, logs JSON Lines, dashboard HTML estático
+- **Automação:** GitHub Actions (`ruff`, `pytest`, gate do contrato)
+- **Ambiente:** Python ≥ 3.11, gerenciado com `uv` (`uv.lock`)
+
+> `xgboost` aparece em `pyproject.toml` como dependência do ecossistema do
+> desafio; o baseline entregue e avaliado é sklearn.
 
 ## Setup
 
 ```bash
-uv sync
+uv sync --locked --extra dev
 ```
-
-## Stack inicial
-
-sklearn/XGBoost, Pandera pra data contracts, Evidently pra drift, MLflow pra tracking de experimentos.
-
-Estrutura e divisão de papéis a definir com o time.
-
-## Documentação
-
-- [`docs/baseline.md`](docs/baseline.md) — modelo baseline e métricas de avaliação.
-- [`docs/contratos.md`](docs/contratos.md) — contrato de dados (Pandera) e validação de lotes.
-- [`docs/drift.md`](docs/drift.md) — simulação e detecção de data drift (Evidently).
-- [`docs/observabilidade.md`](docs/observabilidade.md) — logs estruturados, MLflow, alertas, dashboard e CI/CD.
 
 ## Como rodar o projeto do zero
 
-Execute os comandos na raiz do repositório. Ambiente utilizado: Python 3.12.2 (dependências em `uv.lock`).
+Execute na raiz do repositório. Ambiente de referência da validação P5:
+Python 3.12 + dependências travadas em `uv.lock`.
 
 ```bash
 # 0. Instalar dependencias
@@ -58,14 +72,58 @@ uv run python -m src.observability.dashboard
 uv run pytest
 ```
 
-Ao final, abra `reports/observability_dashboard.html` no navegador para ver o status consolidado do pipeline, ou rode `uv run mlflow ui --backend-store-uri sqlite:///mlruns/mlflow.db` para ver os experimentos rastreados. Detalhes de cada etapa estão nos documentos linkados acima.
+**Critérios de sucesso rápidos**
+
+| Etapa | Esperado |
+|---|---|
+| Passo 2 | `reports/baseline_metrics.json` com ROC AUC ≈ 0,75 na logística |
+| Passo 3 | Drift crítico em `pay_0`…`pay_6` |
+| Passo 4 | CLI com exit code ≠ 0 no lote inválido |
+| Passo 5 | Abrir `reports/observability_dashboard.html` |
+| Passo 6 | `pytest` verde (skips só se faltarem CSVs de produção) |
+
+Opcional: `uv run mlflow ui --backend-store-uri sqlite:///mlruns/mlflow.db`
+
+Registro da validação P5: [`docs/reproducibilidade.md`](docs/reproducibilidade.md).
+
+## Documentação
+
+### Técnicas (P1–P4)
+
+- [`docs/baseline.md`](docs/baseline.md) — dados, split, treino e métricas
+- [`docs/contratos.md`](docs/contratos.md) — contrato Pandera e validação de lotes
+- [`docs/drift.md`](docs/drift.md) — simulação e detecção de data drift
+- [`docs/observabilidade.md`](docs/observabilidade.md) — logs, MLflow, alertas, dashboard, CI
+
+### Governança e integração (P5)
+
+- [`docs/lgpd.md`](docs/lgpd.md) — privacidade e finalidade
+- [`docs/retencao.md`](docs/retencao.md) — ciclo de vida dos artefatos
+- [`docs/vieses.md`](docs/vieses.md) — riscos de viés e o que não foi medido
+- [`docs/model_card.md`](docs/model_card.md) — model card do baseline
+- [`docs/checklist.md`](docs/checklist.md) — checklist final da entrega
+- [`docs/revisao_observabilidade.md`](docs/revisao_observabilidade.md) — cross-review da P4
 
 ## Observabilidade e CI/CD
 
-- Logs estruturados (console + JSON Lines) em todas as etapas do pipeline.
-- Tracking de experimentos com MLflow (treino, avaliação, detecção e impacto de drift).
-- Alertas de drift crítico e de bloqueio de contrato, consolidados em `reports/alerts.json`.
-- Agregador de métricas (`src/observability/metrics.py`) e dashboard HTML estático gerado a partir dele.
-- GitHub Actions (`.github/workflows/ci.yml`) roda em todo push/PR: lint (`ruff`), testes (`pytest`) e uma verificação automática de que o contrato de dados bloqueia um lote inválido.
+- Logs estruturados (console + JSON Lines) em todas as etapas do pipeline
+- Tracking com MLflow (treino, avaliação, detecção e impacto de drift)
+- Alertas de drift crítico e bloqueio de contrato em `reports/alerts.json`
+- Dashboard HTML gerado por `src.observability.dashboard`
+- GitHub Actions (`.github/workflows/ci.yml`): lint, testes e verificação de que o contrato bloqueia lote inválido
 
-Detalhes e comandos de reprodução em [`docs/observabilidade.md`](docs/observabilidade.md).
+## Limitações (leitura obrigatória)
+
+- Dataset histórico (Taiwan); não representa o mercado brasileiro atual
+- Atributos demográficos entram no modelo; **não há métricas de equidade por grupo**
+- Recall da logística é baixo (~0,35); acurácia sozinha engana
+- Sem validação temporal
+- Drift de produção é **simulado**
+- Uso real de crédito exigiria nova análise jurídica, fairness e monitoramento contínuo
+
+Detalhes: [`docs/vieses.md`](docs/vieses.md), [`docs/lgpd.md`](docs/lgpd.md), [`docs/model_card.md`](docs/model_card.md).
+
+## Dataset
+
+- **Default of Credit Card Clients** — UCI 350, DOI [10.24432/C55S3H](https://doi.org/10.24432/C55S3H), licença CC BY 4.0
+- Procedência e hash: `data/raw/manifest.json`
