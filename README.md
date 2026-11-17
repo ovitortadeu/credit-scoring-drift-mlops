@@ -6,6 +6,8 @@ Pipeline de **credit scoring** com contratos de dados, detecção de drift,
 observabilidade e governança (LGPD / model card). Projeto acadêmico —
 **não** é motor de decisão de crédito em produção.
 
+**Vídeo STAR:** [https://youtu.be/GFZCZFCkxgk](https://youtu.be/GFZCZFCkxgk)
+
 ## Papéis do time
 
 | Pessoa | Liderança | Documentação |
